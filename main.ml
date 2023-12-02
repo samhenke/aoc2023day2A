@@ -24,5 +24,45 @@
 open Base
 
 
+let parse_cube_count cube_count =
+    Stdlib.Scanf.sscanf
+        (String.strip cube_count)
+        "%u %s"
+        (fun count color -> color, count)
+
+let parse_selection selection =
+    String.split ~on:',' selection |> List.map ~f:parse_cube_count
+
+let parse_selections selections =
+    String.split ~on:';' selections |> List.map ~f:parse_selection
+
+let parse_game line =
+    let game_str, selections =
+        match String.split ~on:':' line with
+        | [game_str; selections] -> game_str, selections
+        | _ -> assert false
+    in
+    let game_number = Stdlib.Scanf.sscanf game_str "Game %u" (fun x -> x) in
+    (game_number, parse_selections selections)
+
+let selection_is_valid selection =
+    let color_count color =
+        match List.Assoc.find selection ~equal:String.equal color with
+        | Some c -> c
+        | None -> 0
+    in
+    color_count "red" <= 12 &&
+    color_count "green" <= 13 &&
+    color_count "blue" <= 14
+
 let () =
-    Stdlib.print_endline "Hello, World!"
+    In_channel.input_lines In_channel.stdin
+    |> List.map ~f:parse_game
+    |> List.filter_map
+        ~f:(fun (game_number, selections) ->
+                if List.for_all ~f:selection_is_valid selections
+                then Some game_number
+                else None)
+    |> List.reduce_exn ~f:(+)
+    |> Stdlib.print_int
+    |> Stdlib.print_newline
