@@ -56,13 +56,14 @@ let selection_is_valid selection =
     color_count "blue" <= 14
 
 let () =
+    let valid_game (game_number, selections) =
+        if List.for_all ~f:selection_is_valid selections
+        then Some game_number
+        else None
+    in
     In_channel.input_lines In_channel.stdin
     |> List.map ~f:parse_game
-    |> List.filter_map
-        ~f:(fun (game_number, selections) ->
-                if List.for_all ~f:selection_is_valid selections
-                then Some game_number
-                else None)
+    |> List.filter_map ~f:valid_game
     |> List.reduce_exn ~f:(+)
     |> Stdlib.print_int
     |> Stdlib.print_newline
